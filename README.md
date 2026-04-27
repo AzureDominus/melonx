@@ -105,7 +105,7 @@ To have MeloNX show inside SideStore (or AltStore), You must re-install it:
 
 #### 1. Sideload MeloNX
 Download and install MeloNX using your preferred Apple ID (NOT CERT) sideloader:
-- [Download MeloNX from Releases](https://git.ryujinx.app/melonx/emu/-/releases)
+- [Download MeloNX from Releases](https://git.ryujinx.app/projects/MeloNX/releases)
 
 #### 2. Enable Memory Entitlement
 - Visit [Apple Developer Identifiers](https://developer.apple.com/account/resources/identifiers).
@@ -137,7 +137,7 @@ Download and install MeloNX using your preferred Apple ID (NOT CERT) sideloader:
 #### 1. Sideload Applications
 
 Download and install both apps using your preferred **APPLE ID** sideloader:
-- **MeloNX**: [Download from Releases](https://git.ryujinx.app/melonx/emu/-/releases)
+- **MeloNX**: [Download from Releases](https://git.ryujinx.app/projects/MeloNX/releases)
 - **Entitlement App**: [Download IPA](https://github.com/hugeBlack/GetMoreRam/releases/download/nightly/Entitlement.ipa)
 #### 2. Enable Memory Entitlement
 
