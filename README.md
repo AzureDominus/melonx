@@ -75,7 +75,7 @@ We have a discord server!
 
 #### 1. Sideload Application
 Download and install MeloNX using [PlumeImpactor](https://github.com/khcrysalis/PlumeImpactor/releases) on a computer.
-- [Download **MeloNX** From Releases](https://git.ryujinx.app/melonx/emu/-/releases)
+- [Download **MeloNX** From Releases](https://git.ryujinx.app/projects/MeloNX/releases)
 - Open PlumeImpactor > Click Settings > Click Login
 - Login with the same Apple ID you are using for SideStore (or AltStore).
 - Import the MeloNX .ipa you downloaded earlier.
