@@ -139,9 +139,24 @@ jobs:
             exit 1
           fi
 
+          ryujinx_dylib="$PWD/src/MeloNX/MeloNX/Dependencies/Dynamic Libraries/Ryujinx.Headless.SDL2.dylib"
+          if [ ! -f "$ryujinx_dylib" ]; then
+            ryujinx_dylib="$(find "$PWD/src/Ryujinx.Headless.SDL2" "$PWD/src/MeloNX/MeloNX/Dependencies" -name 'Ryujinx.Headless.SDL2.dylib' -type f -print -quit)"
+          fi
+          if [ -z "$ryujinx_dylib" ] || [ ! -f "$ryujinx_dylib" ]; then
+            echo "Ryujinx.Headless.SDL2.dylib was not produced" >&2
+            exit 1
+          fi
+
+          mkdir -p "$app_path/Frameworks"
+          ditto "$ryujinx_dylib" "$app_path/Frameworks/Ryujinx.Headless.SDL2.dylib"
+          chmod 755 "$app_path/Frameworks/Ryujinx.Headless.SDL2.dylib"
+          test -f "$app_path/Frameworks/Ryujinx.Headless.SDL2.dylib"
+
           rm -rf "$IPA_OUTPUT_DIR"
           mkdir -p "$IPA_OUTPUT_DIR/Payload"
           ditto "$app_path" "$IPA_OUTPUT_DIR/Payload/MeloNX.app"
+          test -f "$IPA_OUTPUT_DIR/Payload/MeloNX.app/Frameworks/Ryujinx.Headless.SDL2.dylib"
           (cd "$IPA_OUTPUT_DIR" && zip -qry MeloNX-unsigned.ipa Payload)
           du -sh "$IPA_OUTPUT_DIR/MeloNX-unsigned.ipa"
 
