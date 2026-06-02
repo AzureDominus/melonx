@@ -76,9 +76,15 @@ final class RemoteControllerClient: ObservableObject, RemoteControllerPacketSend
             case .ready:
                 self?.updateStatus("Connected to \(label)", connected: true)
             case .waiting(let error):
-                self?.updateStatus("LAN waiting: \(error.localizedDescription)", connected: false)
+                self?.updateStatus(
+                    RemoteControllerLocalNetwork.statusMessage(prefix: "LAN waiting", error: error),
+                    connected: false
+                )
             case .failed(let error):
-                self?.updateStatus("LAN connection failed: \(error.localizedDescription)", connected: false)
+                self?.updateStatus(
+                    RemoteControllerLocalNetwork.statusMessage(prefix: "LAN connection failed", error: error),
+                    connected: false
+                )
                 self?.sendContinuation?.finish()
             case .cancelled:
                 self?.updateStatus("Not connected", connected: false)
@@ -200,7 +206,6 @@ final class RemoteControllerHost: ObservableObject {
             parameters.includePeerToPeer = true
 
             let listener = try NWListener(using: parameters, on: RemoteControllerLocalNetwork.port)
-            listener.service = NWListener.Service(name: "MeloNX", type: RemoteControllerLocalNetwork.serviceType)
             listener.newConnectionHandler = { [weak self] connection in
                 self?.acceptLocalNetworkConnection(connection)
             }
@@ -209,9 +214,15 @@ final class RemoteControllerHost: ObservableObject {
                 case .ready:
                     self?.updateStatus("LAN Host running at \(RemoteControllerLocalNetwork.endpointDescription)", running: true)
                 case .waiting(let error):
-                    self?.updateStatus("LAN Host waiting: \(error.localizedDescription)", running: true)
+                    self?.updateStatus(
+                        RemoteControllerLocalNetwork.statusMessage(prefix: "LAN Host waiting", error: error),
+                        running: true
+                    )
                 case .failed(let error):
-                    self?.updateStatus("LAN Host failed: \(error.localizedDescription)", running: false)
+                    self?.updateStatus(
+                        RemoteControllerLocalNetwork.statusMessage(prefix: "LAN Host failed", error: error),
+                        running: false
+                    )
                 case .cancelled:
                     self?.updateStatus("Remote Controller Host stopped", running: false)
                 default:

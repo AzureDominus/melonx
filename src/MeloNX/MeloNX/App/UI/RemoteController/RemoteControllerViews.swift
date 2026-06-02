@@ -122,12 +122,29 @@ private struct RemoteControllerDevicePicker: View {
 private struct LocalNetworkRemoteControllerDevicePicker: View {
     @StateObject private var browser = RemoteControllerLocalNetworkBrowser.shared
     @State private var isManualConnectPresented = false
+    @State private var hasStartedBonjourSearch = false
 
     var body: some View {
         Menu {
-            if browser.peers.isEmpty {
-                Label(browser.statusText, systemImage: "magnifyingglass")
-            } else {
+            Button {
+                isManualConnectPresented = true
+            } label: {
+                Label("Manual Host", systemImage: "number")
+            }
+
+            Divider()
+
+            Button {
+                browser.stop()
+                browser.start()
+                hasStartedBonjourSearch = true
+            } label: {
+                Label("Search Bonjour", systemImage: "magnifyingglass")
+            }
+
+            if !browser.peers.isEmpty {
+                Divider()
+
                 ForEach(browser.peers) { peer in
                     Button {
                         RemoteControllerClient.shared.connectToLocalNetworkPeer(peer)
@@ -135,12 +152,8 @@ private struct LocalNetworkRemoteControllerDevicePicker: View {
                         Label(peer.name, systemImage: "ipad")
                     }
                 }
-            }
-
-            Button {
-                isManualConnectPresented = true
-            } label: {
-                Label("Manual Host", systemImage: "number")
+            } else if hasStartedBonjourSearch {
+                Label(browser.statusText, systemImage: "info.circle")
             }
         } label: {
             Label("LAN", systemImage: "network")
@@ -149,9 +162,6 @@ private struct LocalNetworkRemoteControllerDevicePicker: View {
                 .padding(.vertical, 8)
                 .background(.ultraThinMaterial)
                 .clipShape(Capsule())
-        }
-        .onAppear {
-            browser.start()
         }
         .sheet(isPresented: $isManualConnectPresented) {
             LocalNetworkManualConnectSheet()
@@ -276,7 +286,7 @@ private struct RemoteControllerPairingControl: View {
                 WiFiAwareRemoteControllerPairingControl()
             }
         } else {
-            Label("LAN fallback active: connect from iPhone with LAN or \(RemoteControllerLocalNetwork.endpointDescription)", systemImage: "network")
+            Label("LAN fallback active: connect from iPhone with Manual Host \(RemoteControllerLocalNetwork.endpointDescription)", systemImage: "network")
                 .foregroundStyle(.secondary)
         }
     }

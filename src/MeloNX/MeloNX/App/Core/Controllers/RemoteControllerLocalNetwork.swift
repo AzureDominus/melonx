@@ -23,6 +23,15 @@ enum RemoteControllerLocalNetwork {
         return "\(address):\(defaultPort)"
     }
 
+    static func statusMessage(prefix: String, error: NWError) -> String {
+        let errorDescription = String(describing: error)
+        if errorDescription.contains("NoAuth") || errorDescription.contains("-65555") {
+            return "\(prefix): Local Network permission is denied. Enable MeloNX in Settings > Privacy & Security > Local Network."
+        }
+
+        return "\(prefix): \(error.localizedDescription)"
+    }
+
     private static func localIPv4Addresses() -> [String] {
         var interfacePointer: UnsafeMutablePointer<ifaddrs>?
         guard getifaddrs(&interfacePointer) == 0, let firstInterface = interfacePointer else {
@@ -131,9 +140,9 @@ final class RemoteControllerLocalNetworkBrowser: ObservableObject {
                         self?.statusText = "Searching local network"
                     }
                 case .failed(let error):
-                    self?.statusText = "LAN search failed: \(error.localizedDescription)"
+                    self?.statusText = RemoteControllerLocalNetwork.statusMessage(prefix: "Bonjour search failed", error: error)
                 case .waiting(let error):
-                    self?.statusText = "LAN search waiting: \(error.localizedDescription)"
+                    self?.statusText = RemoteControllerLocalNetwork.statusMessage(prefix: "Bonjour search waiting", error: error)
                 case .cancelled:
                     self?.statusText = "LAN search stopped"
                 default:
