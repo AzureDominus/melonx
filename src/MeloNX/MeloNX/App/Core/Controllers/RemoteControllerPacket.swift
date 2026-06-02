@@ -123,7 +123,7 @@ enum RemoteControllerPacket {
 private extension Data {
     mutating func appendLittleEndian<T: FixedWidthInteger>(_ value: T) {
         var littleEndian = value.littleEndian
-        withUnsafeBytes(of: &littleEndian) { append(contentsOf: $0) }
+        Swift.withUnsafeBytes(of: &littleEndian) { append(contentsOf: $0) }
     }
 
     mutating func appendFloat32(_ value: Float) {

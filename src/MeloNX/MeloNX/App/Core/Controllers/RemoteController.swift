@@ -50,7 +50,7 @@ final class RemoteController: BaseController {
 
         let isNewer = Int32(bitPattern: sequence &- latestSequence) > 0
         if isNewer {
-            latestSequence = sequence
+            self.latestSequence = sequence
         }
         return !isNewer
     }

@@ -11,8 +11,8 @@ import UIKit
 import GameController
 
 class NativeController: BaseController {
-    override init(nativeController: GCController?) {
-        super.init(nativeController: nativeController)
+    init(nativeController: GCController?) {
+        super.init(nativeController: nativeController, source: .native, displayName: nil)
     }
     
     var count = 0
