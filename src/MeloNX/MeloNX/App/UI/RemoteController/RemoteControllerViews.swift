@@ -165,7 +165,7 @@ private struct LocalNetworkManualConnectSheet: View {
     @State private var port = String(RemoteControllerLocalNetwork.defaultPort)
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             Form {
                 TextField("Host or IP", text: $host)
                     .textInputAutocapitalization(.never)
