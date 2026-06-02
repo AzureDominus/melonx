@@ -86,6 +86,9 @@ jobs:
       - name: Build unsigned app
         run: |
           set -euo pipefail
+          libdeps="$PWD/build/libdeps"
+          mkdir -p build
+          ln -sfn "$PWD/src/MeloNX/MeloNX/Dependencies/Dynamic Libraries" "$libdeps"
           rm -rf "$RESULT_BUNDLE_PATH"
           xcodebuild \
             -project "$XCODE_PROJECT" \
@@ -102,7 +105,7 @@ jobs:
             DEVELOPMENT_TEAM="" \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
             ONLY_ACTIVE_ARCH=NO \
-            'LIBRARY_SEARCH_PATHS=$(inherited) $(PROJECT_DIR)/MeloNX/Dependencies/Dynamic Libraries' \
+            "LIBRARY_SEARCH_PATHS=\$(inherited) $libdeps" \
             'OTHER_LDFLAGS=$(inherited) -lRyujinx.Headless.SDL2'
 
       - name: Collect Xcode diagnostics
