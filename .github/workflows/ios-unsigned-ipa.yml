@@ -106,7 +106,7 @@ jobs:
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
             ONLY_ACTIVE_ARCH=NO \
             "LIBRARY_SEARCH_PATHS=\$(inherited) $libdeps" \
-            'OTHER_LDFLAGS=$(inherited) -lRyujinx.Headless.SDL2'
+            "OTHER_LDFLAGS=\$(inherited) $libdeps/Ryujinx.Headless.SDL2.dylib"
 
       - name: Collect Xcode diagnostics
         if: failure()
