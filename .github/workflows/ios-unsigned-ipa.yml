@@ -1,0 +1,130 @@
+name: iOS unsigned IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - XC-ios-ht
+      - main
+      - master
+    paths:
+      - ".github/workflows/ios-unsigned-ipa.yml"
+      - "Directory.Packages.props"
+      - "global.json"
+      - "nuget.config"
+      - "src/**"
+      - "distribution/ios/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-unsigned-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  XCODE_PROJECT: src/MeloNX/MeloNX.xcodeproj
+  XCODE_SCHEME: MeloNX
+  XCODE_CONFIGURATION: Release
+  DERIVED_DATA_PATH: build/DerivedData
+  IPA_OUTPUT_DIR: build/ipa
+
+jobs:
+  build:
+    name: Build unsigned IPA
+    runs-on: macos-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Start timer
+        id: timer
+        run: echo "started_at=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Select Xcode
+        run: |
+          set -euo pipefail
+          latest_xcode="$(ls -1d /Applications/Xcode*.app | sort -V | tail -n 1)"
+          sudo xcode-select -s "$latest_xcode/Contents/Developer"
+          xcodebuild -version
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('Directory.Packages.props', 'nuget.config', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Install .NET iOS workload
+        run: dotnet workload install ios
+
+      - name: Resolve Swift packages
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -resolvePackageDependencies
+
+      - name: Build unsigned app
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration "$XCODE_CONFIGURATION" \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
+            clean build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            ONLY_ACTIVE_ARCH=NO
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          app_path="$(find "$DERIVED_DATA_PATH/Build/Products/${XCODE_CONFIGURATION}-iphoneos" -maxdepth 1 -name 'MeloNX.app' -type d -print -quit)"
+          if [ -z "$app_path" ]; then
+            echo "MeloNX.app was not produced" >&2
+            exit 1
+          fi
+
+          rm -rf "$IPA_OUTPUT_DIR"
+          mkdir -p "$IPA_OUTPUT_DIR/Payload"
+          ditto "$app_path" "$IPA_OUTPUT_DIR/Payload/MeloNX.app"
+          (cd "$IPA_OUTPUT_DIR" && zip -qry MeloNX-unsigned.ipa Payload)
+          du -sh "$IPA_OUTPUT_DIR/MeloNX-unsigned.ipa"
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeloNX-unsigned-ipa
+          path: ${{ env.IPA_OUTPUT_DIR }}/MeloNX-unsigned.ipa
+          if-no-files-found: error
+
+      - name: Report duration
+        if: always()
+        run: |
+          finished_at="$(date +%s)"
+          elapsed="$((finished_at - ${{ steps.timer.outputs.started_at }}))"
+          {
+            echo "## iOS unsigned IPA build"
+            echo
+            echo "- Elapsed seconds: $elapsed"
+            echo "- Elapsed minutes: $((elapsed / 60))m $((elapsed % 60))s"
+            echo "- Runner: $RUNNER_OS / $RUNNER_ARCH"
+          } >> "$GITHUB_STEP_SUMMARY"
