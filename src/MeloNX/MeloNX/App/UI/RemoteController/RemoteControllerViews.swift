@@ -114,7 +114,7 @@ private struct RemoteControllerDevicePicker: View {
                 WiFiAwareRemoteControllerDevicePicker()
             }
         } else {
-            Label("Unavailable", systemImage: "exclamationmark.triangle")
+            Label("Entitlement Missing", systemImage: "exclamationmark.triangle")
                 .font(.footnote)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
@@ -198,7 +198,7 @@ private struct RemoteControllerPairingControl: View {
                 WiFiAwareRemoteControllerPairingControl()
             }
         } else {
-            Label("Wi-Fi Aware is not available on this device", systemImage: "exclamationmark.triangle")
+            Label("Wi-Fi Aware entitlement is not active for this signed app", systemImage: "exclamationmark.triangle")
                 .foregroundStyle(.secondary)
         }
     }

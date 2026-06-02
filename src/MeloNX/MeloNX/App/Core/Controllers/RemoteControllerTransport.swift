@@ -101,7 +101,7 @@ final class RemoteControllerHost: ObservableObject {
     func start() {
         guard !isRunning else { return }
         guard RemoteControllerWiFiAwareAvailability.isSupported else {
-            updateStatus("Wi-Fi Aware is not available on this device", running: false)
+            updateStatus("Wi-Fi Aware entitlement is not active for this signed app", running: false)
             return
         }
 

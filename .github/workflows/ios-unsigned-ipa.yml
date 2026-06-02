@@ -157,6 +157,8 @@ jobs:
           mkdir -p "$IPA_OUTPUT_DIR/Payload"
           ditto "$app_path" "$IPA_OUTPUT_DIR/Payload/MeloNX.app"
           test -f "$IPA_OUTPUT_DIR/Payload/MeloNX.app/Frameworks/Ryujinx.Headless.SDL2.dylib"
+          ditto "$PWD/src/MeloNX/MeloNX/MeloNX.entitlements" "$IPA_OUTPUT_DIR/MeloNX-signing-entitlements.plist"
+          /usr/libexec/PlistBuddy -c "Print :com.apple.developer.wifi-aware" "$IPA_OUTPUT_DIR/MeloNX-signing-entitlements.plist"
           (cd "$IPA_OUTPUT_DIR" && zip -qry MeloNX-unsigned.ipa Payload)
           du -sh "$IPA_OUTPUT_DIR/MeloNX-unsigned.ipa"
 
@@ -164,7 +166,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MeloNX-unsigned-ipa
-          path: ${{ env.IPA_OUTPUT_DIR }}/MeloNX-unsigned.ipa
+          path: |
+            ${{ env.IPA_OUTPUT_DIR }}/MeloNX-unsigned.ipa
+            ${{ env.IPA_OUTPUT_DIR }}/MeloNX-signing-entitlements.plist
           if-no-files-found: error
 
       - name: Report duration
