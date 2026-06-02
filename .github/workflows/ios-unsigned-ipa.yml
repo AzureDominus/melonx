@@ -101,7 +101,9 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="" \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            ONLY_ACTIVE_ARCH=NO
+            ONLY_ACTIVE_ARCH=NO \
+            'LIBRARY_SEARCH_PATHS=$(inherited) $(PROJECT_DIR)/MeloNX/Dependencies/Dynamic Libraries' \
+            'OTHER_LDFLAGS=$(inherited) -lRyujinx.Headless.SDL2'
 
       - name: Collect Xcode diagnostics
         if: failure()
