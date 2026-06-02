@@ -29,6 +29,7 @@ env:
   XCODE_CONFIGURATION: Release
   DERIVED_DATA_PATH: build/DerivedData
   IPA_OUTPUT_DIR: build/ipa
+  RESULT_BUNDLE_PATH: build/MeloNX.xcresult
 
 jobs:
   build:
@@ -49,10 +50,7 @@ jobs:
       - name: Select Xcode
         run: |
           set -euo pipefail
-          selected_xcode="$(find /Applications -maxdepth 1 -name 'Xcode_16*.app' -print | sort -V | tail -n 1)"
-          if [ -z "$selected_xcode" ]; then
-            selected_xcode="$(find /Applications -maxdepth 1 -name 'Xcode*.app' -print | sort -V | tail -n 1)"
-          fi
+          selected_xcode="$(find /Applications -maxdepth 1 -name 'Xcode*.app' -print | sort -V | tail -n 1)"
           if [ -z "$selected_xcode" ]; then
             echo "No Xcode installation found" >&2
             exit 1
@@ -88,6 +86,7 @@ jobs:
       - name: Build unsigned app
         run: |
           set -euo pipefail
+          rm -rf "$RESULT_BUNDLE_PATH"
           xcodebuild \
             -project "$XCODE_PROJECT" \
             -scheme "$XCODE_SCHEME" \
@@ -95,6 +94,7 @@ jobs:
             -sdk iphoneos \
             -destination "generic/platform=iOS" \
             -derivedDataPath "$DERIVED_DATA_PATH" \
+            -resultBundlePath "$RESULT_BUNDLE_PATH" \
             clean build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
@@ -102,6 +102,28 @@ jobs:
             DEVELOPMENT_TEAM="" \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
             ONLY_ACTIVE_ARCH=NO
+
+      - name: Collect Xcode diagnostics
+        if: failure()
+        run: |
+          set -euo pipefail
+          mkdir -p build/diagnostics
+          if [ -d "$RESULT_BUNDLE_PATH" ]; then
+            xcrun xcresulttool get --path "$RESULT_BUNDLE_PATH" --format json --legacy > build/diagnostics/xcresult.json || true
+          fi
+          if [ -d "$DERIVED_DATA_PATH/Logs" ]; then
+            ditto "$DERIVED_DATA_PATH/Logs" build/diagnostics/Logs
+          fi
+
+      - name: Upload Xcode diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeloNX-xcode-diagnostics
+          path: |
+            ${{ env.RESULT_BUNDLE_PATH }}
+            build/diagnostics
+          if-no-files-found: warn
 
       - name: Package unsigned IPA
         run: |
