@@ -49,8 +49,16 @@ jobs:
       - name: Select Xcode
         run: |
           set -euo pipefail
-          latest_xcode="$(ls -1d /Applications/Xcode*.app | sort -V | tail -n 1)"
-          sudo xcode-select -s "$latest_xcode/Contents/Developer"
+          selected_xcode="$(find /Applications -maxdepth 1 -name 'Xcode_16*.app' -print | sort -V | tail -n 1)"
+          if [ -z "$selected_xcode" ]; then
+            selected_xcode="$(find /Applications -maxdepth 1 -name 'Xcode*.app' -print | sort -V | tail -n 1)"
+          fi
+          if [ -z "$selected_xcode" ]; then
+            echo "No Xcode installation found" >&2
+            exit 1
+          fi
+          sudo xcode-select -s "$selected_xcode/Contents/Developer"
+          echo "Selected Xcode: $selected_xcode"
           xcodebuild -version
 
       - name: Setup .NET
