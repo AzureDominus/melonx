@@ -12,7 +12,8 @@ struct ButtonView: View {
     var button: VirtualControllerButton
     var opacity: Double
     @Binding var layout: LayoutConfig?
-    var joystickDpadPoint: JoystickDPadPoint = .shared
+    var inputSink: ControllerInputSink
+    var joystickDpadPoint: JoystickDPadPoint
     
     @AppStorage("onscreenhandheld") var onscreenjoy: Bool = false
     @AppStorage("joystickDpad") private var joystickDpad = false
@@ -24,10 +25,19 @@ struct ButtonView: View {
     @State private var toggleState = false
     @State private var size: CGSize = .zero
     
-    init(disabled: Bool = false, button: VirtualControllerButton, opacity: Double = 1.0, layout: Binding<LayoutConfig> = .constant(LayoutConfig())) {
+    init(
+        disabled: Bool = false,
+        button: VirtualControllerButton,
+        opacity: Double = 1.0,
+        layout: Binding<LayoutConfig> = .constant(LayoutConfig()),
+        inputSink: ControllerInputSink = LocalControllerInputSink(),
+        joystickDpadPoint: JoystickDPadPoint = .shared
+    ) {
         self.disabled = disabled
         self.button = button
         self.opacity = opacity
+        self.inputSink = inputSink
+        self.joystickDpadPoint = joystickDpadPoint
         if layout.wrappedValue == LayoutConfig() {
             _layout = .constant(nil)
         } else {
@@ -107,8 +117,6 @@ struct ButtonView: View {
         }
     }
     
-    let virtualController = ControllerManager.shared.virtualController
-    
     private func handleButtonPress() {
         DispatchQueue.global(qos: .userInteractive).async {
             guard !isPressed || istoggle else { return }
@@ -118,21 +126,21 @@ struct ButtonView: View {
                 isPressed = toggleState
                 if joystickDpad, button.isDPad {
                     if toggleState {
-                        joystickDpadPoint.pressed(button)
+                        joystickDpadPoint.pressed(button, inputSink: inputSink)
                     } else {
-                        joystickDpadPoint.released(button)
+                        joystickDpadPoint.released(button, inputSink: inputSink)
                     }
                 } else {
                     let value = toggleState ? 1 : 0
-                    virtualController.setButtonState(Uint8(value), for: button)
+                    inputSink.setButtonState(value == 1, for: button)
                 }
                 Haptics.shared.play(.soft)
             } else {
                 isPressed = true
                 if joystickDpad, button.isDPad {
-                    joystickDpadPoint.pressed(button)
+                    joystickDpadPoint.pressed(button, inputSink: inputSink)
                 } else {
-                    virtualController.setButtonState(1, for: button)
+                    inputSink.setButtonState(true, for: button)
                 }
                 Haptics.shared.play(.soft)
             }
@@ -146,9 +154,9 @@ struct ButtonView: View {
         isPressed = false
         DispatchQueue.global(qos: .userInteractive).async {
             if joystickDpad, button.isDPad {
-                joystickDpadPoint.released(button); return
+                joystickDpadPoint.released(button, inputSink: inputSink); return
             }
-            virtualController.setButtonState(0, for: button)
+            inputSink.setButtonState(false, for: button)
         }
     }
     

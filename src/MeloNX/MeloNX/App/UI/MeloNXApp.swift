@@ -25,6 +25,7 @@ struct MeloNXApp: View {
     @AppStorage("hasbeenfinished") var inSetup: Bool = true
     @AppStorage("skippedSetup") var skippedSetup: Bool = false
     @AppStorage("firstBoot") var firstBoot: Bool = false
+    @AppStorage("MeloNXAppMode") var appModeRaw: String = ""
     @State var viewShown = false
     @State var showedSetup = false
 
@@ -40,36 +41,56 @@ struct MeloNXApp: View {
     ]
     
     let fileManager = FileManager.default
+
+    private static let runtimeInitializationLock = NSLock()
+    private static var didInitializeEmulatorRuntime = false
     
-    init() {
-        SDL_SetMainReady()
-        SDL_iPhoneSetEventPump(SDL_TRUE)
-        SDL_Init(SDL_INIT_EVENTS | SDL_INIT_AUDIO)
-        setupEnvironment()
+    private var shouldShowModeRouter: Bool {
+        appModeRaw.isEmpty && UIDevice.current.userInterfaceIdiom == .phone
+    }
+
+    private var selectedMode: MeloNXAppMode {
+        if let mode = MeloNXAppMode(rawValue: appModeRaw) {
+            return mode
+        }
+
+        return UIDevice.current.userInterfaceIdiom == .phone ? .controller : .emulator
     }
     
     var body: some View {
         Group {
+            if shouldShowModeRouter {
+                AppModeRouterView { mode in
+                    appModeRaw = mode.rawValue
+                }
+            } else if selectedMode == .controller {
+                RemoteControllerModeView()
+            } else {
+                EmulatorRuntimeView(environment: environment) {
+                    emulatorBody
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var emulatorBody: some View {
+        Group {
             if !inSetup {
                 ContentView(viewShown: $viewShown)
                     .onAppear() {
-                        
                         if skippedSetup {
                             return
                         }
-                        
+
                         if !Ryujinx.shared.checkIfKeysImported() {
                             inSetup = true
                         }
                         let firmware = Ryujinx.shared.fetchFirmwareVersion()
-                        
+
                         if (firmware == "" ? "0" : firmware) == "0" {
                             inSetup = true
                         }
-                        
-                        // NSExtension Test
-                        
-                        
                     }
             } else {
                 SetupView(isInSetup: $inSetup)
@@ -96,7 +117,17 @@ struct MeloNXApp: View {
         }
     }
     
-    func setupEnvironment() {
+    static func initializeEmulatorRuntime(environment: [EnvironmentVariable]) {
+        runtimeInitializationLock.lock()
+        defer { runtimeInitializationLock.unlock() }
+
+        guard !didInitializeEmulatorRuntime else { return }
+        didInitializeEmulatorRuntime = true
+
+        SDL_SetMainReady()
+        SDL_iPhoneSetEventPump(SDL_TRUE)
+        SDL_Init(SDL_INIT_EVENTS | SDL_INIT_AUDIO)
+
         environment.forEach { env in
             env.set()
         }
@@ -126,5 +157,4 @@ struct MeloNXApp: View {
         }
     }
 }
-
 

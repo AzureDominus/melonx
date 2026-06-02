@@ -12,7 +12,7 @@ import CoreMotion
 // MARK: - Main Controller View
 
 struct LayoutView: View {
-    @EnvironmentObject var gameHandler: LaunchGameHandler
+    @Binding var isPortrait: Bool
     @Environment(\.verticalSizeClass) var verticalSizeClass
     
     var body: some View {
@@ -24,31 +24,45 @@ struct LayoutView: View {
     }
     private func updateOrientation() {
         guard let window = AppDelegate.window else { return }
-        gameHandler.isPortrait = window.bounds.size.height > window.bounds.size.width
+        isPortrait = window.bounds.size.height > window.bounds.size.width
     }
 }
 
 struct ControllerView: View {
     @AppStorage("On-ScreenControllerScale") private var controllerScale: Double = 1.0
     @AppStorage("stickButton") private var stickButton = false
-    @EnvironmentObject var gameHandler: LaunchGameHandler
     @State private var hideDpad = false
     @State private var hideABXY = false
     @Binding var isEditing: Bool
+    @Binding var isPortrait: Bool
     @State private var selectedButton: String?
     @State private var selectedJoystick: String?
     @Environment(\.verticalSizeClass) var verticalSizeClass
     @State private var showEditControls = true
+    @StateObject private var joystickDpadPoint = JoystickDPadPoint()
+    let inputSink: ControllerInputSink
     
     // Game-specific layout support
     var gameId: String?
     @State private var layout: LayoutConfig = LayoutConfig()
+
+    init(
+        isEditing: Binding<Bool>,
+        gameId: String? = nil,
+        isPortrait: Binding<Bool> = .constant(false),
+        inputSink: ControllerInputSink = LocalControllerInputSink()
+    ) {
+        self._isEditing = isEditing
+        self.gameId = gameId
+        self._isPortrait = isPortrait
+        self.inputSink = inputSink
+    }
     
     var body: some View {
         ZStack {
             Group {
                 let isPad = UIDevice.current.userInterfaceIdiom == .pad
-                if gameHandler.isPortrait && !isPad {
+                if isPortrait && !isPad {
                     portraitLayout
                 } else {
                     landscapeLayout
@@ -276,14 +290,16 @@ struct ControllerView: View {
             layout: $layout,
             isEditing: isEditing,
             selectedButton: $selectedButton,
-            selectedJoystick: $selectedJoystick
+            selectedJoystick: $selectedJoystick,
+            inputSink: inputSink,
+            joystickDpadPoint: joystickDpadPoint
         )
     }
     
     private func editableJoystick(
         id: String,
         iscool: Bool = false,
-        showBackground: Binding<Bool>,
+        showBackground: Binding<Bool>
     ) -> some View {
         EditableJoystickView(
             id: id,
@@ -293,12 +309,12 @@ struct ControllerView: View {
             isEditing: isEditing,
             selectedJoystick: $selectedJoystick,
             selectedButton: $selectedButton,
+            inputSink: inputSink
         )
     }
 
     private func updateOrientation() {
         guard let window = AppDelegate.window else { return }
-        gameHandler.isPortrait = window.bounds.size.height > window.bounds.size.width
+        isPortrait = window.bounds.size.height > window.bounds.size.width
     }
 }
-

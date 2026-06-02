@@ -122,6 +122,41 @@ class ControllerManager: ObservableObject {
             return _privAllControllers.first(where: { $0.id == id })
         }
     }
+
+    func registerRemoteController(_ controller: RemoteController) {
+        controllerQueue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            guard !self._privAllControllers.contains(where: { $0 === controller }) else { return }
+
+            self._privAllControllers.append(controller)
+
+            DispatchQueue.main.async {
+                self.allControllers = self._privAllControllers
+                if !self.selectedControllers.contains(controller.id) {
+                    self.selectedControllers.append(controller.id)
+                }
+                if Ryujinx.shared.isRunning {
+                    Ryujinx.shared.reloadControllersWithInfo()
+                }
+            }
+        }
+    }
+
+    func unregisterRemoteController(_ controller: RemoteController) {
+        controllerQueue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            controller.cleanup()
+            self._privAllControllers.removeAll { $0 === controller }
+
+            DispatchQueue.main.async {
+                self.allControllers = self._privAllControllers
+                self.selectedControllers.removeAll { $0 == controller.id }
+                if Ryujinx.shared.isRunning {
+                    Ryujinx.shared.reloadControllersWithInfo()
+                }
+            }
+        }
+    }
     
     func firstControllerForName(_ name: String) -> BaseController? {
         return controllerQueue.sync {

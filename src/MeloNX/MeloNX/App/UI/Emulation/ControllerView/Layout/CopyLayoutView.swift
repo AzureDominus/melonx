@@ -79,7 +79,27 @@ struct EditableButtonView: View {
     var isEditing: Bool
     @Binding var selectedButton: String?
     @Binding var selectedJoystick: String?
+    let inputSink: ControllerInputSink
+    let joystickDpadPoint: JoystickDPadPoint
     @GestureState private var dragOffset = CGSize.zero
+
+    init(
+        button: VirtualControllerButton,
+        layout: Binding<LayoutConfig>,
+        isEditing: Bool,
+        selectedButton: Binding<String?>,
+        selectedJoystick: Binding<String?>,
+        inputSink: ControllerInputSink = LocalControllerInputSink(),
+        joystickDpadPoint: JoystickDPadPoint = .shared
+    ) {
+        self.button = button
+        self._layout = layout
+        self.isEditing = isEditing
+        self._selectedButton = selectedButton
+        self._selectedJoystick = selectedJoystick
+        self.inputSink = inputSink
+        self.joystickDpadPoint = joystickDpadPoint
+    }
 
     var body: some View {
         Group {
@@ -109,12 +129,12 @@ struct EditableButtonView: View {
                     )
             } else {
                 if layout.buttons[button.id, default: ButtonLayout()].hidden {
-                    ButtonView(button: button, layout: $layout)
+                    ButtonView(button: button, layout: $layout, inputSink: inputSink, joystickDpadPoint: joystickDpadPoint)
                         .scaleEffect(layout.buttons[button.id]?.scale ?? 1.0)
                         .offset(layout.buttons[button.id]?.offset ?? .zero)
                         .opacity(0)
                 } else {
-                    ButtonView(button: button, layout: $layout)
+                    ButtonView(button: button, layout: $layout, inputSink: inputSink, joystickDpadPoint: joystickDpadPoint)
                         .scaleEffect(layout.buttons[button.id]?.scale ?? 1.0)
                         .offset(layout.buttons[button.id]?.offset ?? .zero)
                 }

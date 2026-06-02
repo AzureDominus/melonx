@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum VirtualControllerButton: Int, Codable {
+enum VirtualControllerButton: Int, Codable, CaseIterable {
     case A
     case B
     case X

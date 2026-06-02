@@ -77,11 +77,11 @@ struct EmulationView: View {
             
             // Above Emulation View
             if controllerManager.hasVirtualController() {
-                ControllerView(isEditing: .constant(false), gameId: gameHandler.currentGame?.titleId) // Virtual Controller
+                ControllerView(isEditing: .constant(false), gameId: gameHandler.currentGame?.titleId, isPortrait: $gameHandler.isPortrait) // Virtual Controller
                     .opacity(controllerOpacity)
                     .allowsHitTesting(true)
             } else {
-                LayoutView()
+                LayoutView(isPortrait: $gameHandler.isPortrait)
                     .allowsHitTesting(false)
             }
             

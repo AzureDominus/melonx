@@ -13,25 +13,23 @@ class JoystickDPadPoint: ObservableObject {
     @Published var joystickDpadPoint: (x: Double, y: Double) = (0, 0)
     @Published var currentlyPressed: Set<VirtualControllerButton> = []
     
-    let virtualController = ControllerManager.shared.virtualController
-    
-    func pressed(_ button: VirtualControllerButton) {
+    func pressed(_ button: VirtualControllerButton, inputSink: ControllerInputSink = LocalControllerInputSink()) {
         guard button.isDPad else { return }
         currentlyPressed.insert(button)
         print(button)
         print(currentlyPressed)
-        recomputeDPad()
+        recomputeDPad(inputSink: inputSink)
     }
 
-    func released(_ button: VirtualControllerButton) {
+    func released(_ button: VirtualControllerButton, inputSink: ControllerInputSink = LocalControllerInputSink()) {
         guard button.isDPad else { return }
         currentlyPressed.remove(button)
         print(button)
         print(currentlyPressed)
-        recomputeDPad()
+        recomputeDPad(inputSink: inputSink)
     }
 
-    private func recomputeDPad() {
+    private func recomputeDPad(inputSink: ControllerInputSink) {
         // Y axis
         if currentlyPressed.contains(.dPadUp) {
             joystickDpadPoint.y = -1
@@ -52,6 +50,6 @@ class JoystickDPadPoint: ObservableObject {
         
         print(joystickDpadPoint)
         
-        virtualController.thumbstickMoved(.left, x: joystickDpadPoint.x, y: joystickDpadPoint.y)
+        inputSink.setLeftStick(x: Float(joystickDpadPoint.x), y: Float(joystickDpadPoint.y))
     }
 }

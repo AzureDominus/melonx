@@ -568,6 +568,7 @@ struct SettingsViewNew: View {
     private var inputSettings: some View {
         SettingsSection(title: "Input Configuration") {
             controllerSelectionCard
+            RemoteControllerHostPanel()
             controllerTogglesCard
             onScreenControllerCard
         }

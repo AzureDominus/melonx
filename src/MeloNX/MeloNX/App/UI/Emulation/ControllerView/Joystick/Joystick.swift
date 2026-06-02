@@ -13,6 +13,7 @@ final class JoystickView: UIView {
     var right: Bool = true
     var background: Bool = false
     var sensitivity: CGFloat = 1.2
+    var inputSink: ControllerInputSink = LocalControllerInputSink()
     
     private var dragDiameter: CGFloat {
         let base: CGFloat = 160
@@ -43,8 +44,6 @@ final class JoystickView: UIView {
         let maxRadius = (boundarySize - joystickSize) / 2
         return maxRadius + (joystickSize / 2)
     }
-    
-    private let virtualController = ControllerManager.shared.virtualController
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -175,9 +174,9 @@ final class JoystickView: UIView {
     
     private func sendToController(_ position: CGPoint) {
         if right {
-            virtualController.thumbstickMoved(.right, x: position.x, y: position.y)
+            inputSink.setRightStick(x: Float(position.x), y: Float(position.y))
         } else {
-            virtualController.thumbstickMoved(.left, x: position.x, y: position.y)
+            inputSink.setLeftStick(x: Float(position.x), y: Float(position.y))
         }
     }
 }

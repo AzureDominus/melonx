@@ -15,8 +15,29 @@ struct EditableJoystickView: View {
     var isEditing: Bool
     @Binding var selectedJoystick: String?
     @Binding var selectedButton: String?
+    let inputSink: ControllerInputSink
     @GestureState private var dragOffset = CGSize.zero
     @AppStorage("On-ScreenControllerScale") var controllerScale: Double = 1.0
+
+    init(
+        id: String,
+        iscool: Bool,
+        showBackground: Binding<Bool>,
+        layout: Binding<LayoutConfig>,
+        isEditing: Bool,
+        selectedJoystick: Binding<String?>,
+        selectedButton: Binding<String?>,
+        inputSink: ControllerInputSink = LocalControllerInputSink()
+    ) {
+        self.id = id
+        self.iscool = iscool
+        self._showBackground = showBackground
+        self._layout = layout
+        self.isEditing = isEditing
+        self._selectedJoystick = selectedJoystick
+        self._selectedButton = selectedButton
+        self.inputSink = inputSink
+    }
     
     var body: some View {
         if isEditing {
@@ -51,11 +72,10 @@ struct EditableJoystickView: View {
                         }
                 )
         } else {
-            JoystickViewRepresentable(right: iscool, showBackground: layout.joysticks[id]?.background ?? false)
+            JoystickViewRepresentable(right: iscool, showBackground: layout.joysticks[id]?.background ?? false, inputSink: inputSink)
                 .frame(width: 160, height: 160)
                 .scaleEffect(layout.joysticks[id]?.scale ?? CGFloat(controllerScale))
                 .offset(layout.joysticks[id]?.offset ?? .zero)
         }
     }
 }
-

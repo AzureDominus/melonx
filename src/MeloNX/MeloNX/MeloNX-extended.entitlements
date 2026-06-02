@@ -8,5 +8,10 @@
 	<true/>
 	<key>com.apple.developer.kernel.increased-memory-limit</key>
 	<true/>
+	<key>com.apple.developer.wifi-aware</key>
+	<array>
+		<string>Publish</string>
+		<string>Subscribe</string>
+	</array>
 </dict>
 </plist>

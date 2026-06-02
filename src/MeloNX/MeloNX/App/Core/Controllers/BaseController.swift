@@ -11,6 +11,12 @@ import UIKit
 import GameController
 import CoreMotion
 
+enum ControllerSource {
+    case onScreenVirtual
+    case native
+    case remote
+}
+
 class BaseController: Equatable, Identifiable {
     private(set) lazy var pointer: UnsafeMutableRawPointer = {
         UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
@@ -22,8 +28,23 @@ class BaseController: Equatable, Identifiable {
     }
     
     var type: ControllerType
+    var source: ControllerSource
     var virtual: Bool = false
-    var name: String { virtual ? "MeloNX Virtual Controller" : nativeController?.vendorName ?? "Unknown" }
+    var displayName: String?
+    var name: String {
+        if let displayName {
+            return displayName
+        }
+
+        switch source {
+        case .onScreenVirtual:
+            return "MeloNX Virtual Controller"
+        case .native:
+            return nativeController?.vendorName ?? "Unknown"
+        case .remote:
+            return "MeloNX Remote Controller"
+        }
+    }
     var nativeController: GCController?
     
     // Motion
@@ -46,9 +67,11 @@ class BaseController: Equatable, Identifiable {
                           name.lowercased() == "backbone one")
     }
 
-    init(nativeController: GCController?) {
+    init(nativeController: GCController?, source: ControllerSource? = nil, displayName: String? = nil) {
         self.nativeController = nativeController
-        self.virtual = nativeController == nil
+        self.source = source ?? (nativeController == nil ? .onScreenVirtual : .native)
+        self.displayName = displayName
+        self.virtual = self.source == .onScreenVirtual
         self.type = virtual ? .joyconPair : .proController
         
         let identifier = UUID().uuidString

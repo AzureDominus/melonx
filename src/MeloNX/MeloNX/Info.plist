@@ -49,6 +49,16 @@
 	<array>
 		<string>LaunchGameIntent</string>
 	</array>
+	<key>WiFiAwareServices</key>
+	<dict>
+		<key>_melonx-ctrl._tcp</key>
+		<dict>
+			<key>Publishable</key>
+			<dict/>
+			<key>Subscribable</key>
+			<dict/>
+		</dict>
+	</dict>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
