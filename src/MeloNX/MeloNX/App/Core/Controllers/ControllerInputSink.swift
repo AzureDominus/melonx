@@ -25,6 +25,17 @@ extension ControllerInputSink {
     }
 }
 
+final class NoOpControllerInputSink: ControllerInputSink {
+    static let shared = NoOpControllerInputSink()
+
+    private init() {}
+
+    func setButtonState(_ pressed: Bool, for button: VirtualControllerButton) {}
+    func setLeftStick(x: Float, y: Float) {}
+    func setRightStick(x: Float, y: Float) {}
+    func setMotion(accel: SIMD3<Float>, gyro: SIMD3<Float>) {}
+}
+
 final class LocalControllerInputSink: ControllerInputSink {
     private let controller: BaseController
 
@@ -45,7 +56,7 @@ final class LocalControllerInputSink: ControllerInputSink {
     }
 
     func setMotion(accel: SIMD3<Float>, gyro: SIMD3<Float>) {
-        RyujinxBridge.setGamepadMotion(controller.pointer, motionType: 0, axis: accel)
-        RyujinxBridge.setGamepadMotion(controller.pointer, motionType: 1, axis: gyro)
+        RyujinxBridge.setGamepadMotion(controller.pointer, motionType: 1, axis: accel)
+        RyujinxBridge.setGamepadMotion(controller.pointer, motionType: 2, axis: gyro)
     }
 }

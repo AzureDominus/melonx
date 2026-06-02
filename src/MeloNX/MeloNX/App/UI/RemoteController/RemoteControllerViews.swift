@@ -43,6 +43,7 @@ struct RemoteControllerModeView: View {
                     isConnected: client.isConnected,
                     switchToEmulator: {
                         inputSink.stopStreaming()
+                        inputSink.stopMotionUpdates()
                         client.disconnect()
                         appModeRaw = MeloNXAppMode.emulator.rawValue
                     }
@@ -55,9 +56,11 @@ struct RemoteControllerModeView: View {
         .statusBar(hidden: true)
         .onAppear {
             inputSink.startStreaming(framesPerSecond: 60)
+            inputSink.startMotionUpdates(framesPerSecond: 60)
         }
         .onDisappear {
             inputSink.stopStreaming()
+            inputSink.stopMotionUpdates()
         }
     }
 }

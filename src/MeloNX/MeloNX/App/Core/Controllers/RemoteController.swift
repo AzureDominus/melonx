@@ -8,7 +8,10 @@
 import Foundation
 
 final class RemoteController: BaseController {
-    private var latestSequence: UInt32?
+    private let stateLock = NSLock()
+    private var latestReceivedSequence: UInt32?
+    private var pendingState: RemoteControllerState?
+    private var isApplyScheduled = false
 
     init(name: String = "MeloNX Remote Controller") {
         super.init(nativeController: nil, source: .remote, displayName: name)
@@ -20,9 +23,32 @@ final class RemoteController: BaseController {
     }
 
     func apply(_ state: RemoteControllerState) {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+
+        guard isNewerThanLatestReceived(sequence: state.sequence) else { return }
+        latestReceivedSequence = state.sequence
+        pendingState = state
+
+        guard !isApplyScheduled else { return }
+        isApplyScheduled = true
+
         inputQueue.async { [weak self] in
-            guard let self = self else { return }
-            guard !self.isStale(sequence: state.sequence) else { return }
+            self?.drainLatestState()
+        }
+    }
+
+    private func drainLatestState() {
+        while true {
+            stateLock.lock()
+            guard let state = pendingState else {
+                pendingState = nil
+                isApplyScheduled = false
+                stateLock.unlock()
+                return
+            }
+            pendingState = nil
+            stateLock.unlock()
 
             for button in VirtualControllerButton.allCases {
                 RyujinxBridge.setGamepadButtonState(
@@ -36,22 +62,14 @@ final class RemoteController: BaseController {
             self.thumbstickMoved(.right, x: Double(state.rightStick.x), y: Double(state.rightStick.y))
 
             if let accel = state.accel, let gyro = state.gyro {
-                RyujinxBridge.setGamepadMotion(self.pointer, motionType: 0, axis: accel)
-                RyujinxBridge.setGamepadMotion(self.pointer, motionType: 1, axis: gyro)
+                RyujinxBridge.setGamepadMotion(self.pointer, motionType: 1, axis: accel)
+                RyujinxBridge.setGamepadMotion(self.pointer, motionType: 2, axis: gyro)
             }
         }
     }
 
-    private func isStale(sequence: UInt32) -> Bool {
-        guard let latestSequence = latestSequence else {
-            self.latestSequence = sequence
-            return false
-        }
-
-        let isNewer = Int32(bitPattern: sequence &- latestSequence) > 0
-        if isNewer {
-            self.latestSequence = sequence
-        }
-        return !isNewer
+    private func isNewerThanLatestReceived(sequence: UInt32) -> Bool {
+        guard let latestReceivedSequence = latestReceivedSequence else { return true }
+        return Int32(bitPattern: sequence &- latestReceivedSequence) > 0
     }
 }

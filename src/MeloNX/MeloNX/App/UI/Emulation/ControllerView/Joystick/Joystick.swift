@@ -13,7 +13,7 @@ final class JoystickView: UIView {
     var right: Bool = true
     var background: Bool = false
     var sensitivity: CGFloat = 1.2
-    var inputSink: ControllerInputSink = LocalControllerInputSink()
+    var inputSink: ControllerInputSink = NoOpControllerInputSink.shared
     
     private var dragDiameter: CGFloat {
         let base: CGFloat = 160
