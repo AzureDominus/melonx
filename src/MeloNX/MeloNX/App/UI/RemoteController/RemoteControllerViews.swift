@@ -45,7 +45,7 @@ struct RemoteControllerModeView: View {
                         inputSink.stopStreaming()
                         inputSink.stopMotionUpdates()
                         client.disconnect()
-                        appModeRaw = MeloNXAppMode.emulator.rawValue
+                        appModeRaw = ""
                     }
                 )
                 .padding()
@@ -94,7 +94,7 @@ private struct RemoteControllerClientToolbar: View {
                 Button {
                     switchToEmulator()
                 } label: {
-                    Label("Use as Emulator", systemImage: "gamecontroller")
+                    Label("Choose Mode", systemImage: "rectangle.2.swap")
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
@@ -109,18 +109,96 @@ private struct RemoteControllerClientToolbar: View {
 
 private struct RemoteControllerDevicePicker: View {
     var body: some View {
-        if RemoteControllerWiFiAwareAvailability.isSupported {
-            if #available(iOS 26.0, *) {
+        HStack(spacing: 8) {
+            if RemoteControllerWiFiAwareAvailability.isSupported, #available(iOS 26.0, *) {
                 WiFiAwareRemoteControllerDevicePicker()
             }
-        } else {
-            Label("Entitlement Missing", systemImage: "exclamationmark.triangle")
+
+            LocalNetworkRemoteControllerDevicePicker()
+        }
+    }
+}
+
+private struct LocalNetworkRemoteControllerDevicePicker: View {
+    @StateObject private var browser = RemoteControllerLocalNetworkBrowser.shared
+    @State private var isManualConnectPresented = false
+
+    var body: some View {
+        Menu {
+            if browser.peers.isEmpty {
+                Label(browser.statusText, systemImage: "magnifyingglass")
+            } else {
+                ForEach(browser.peers) { peer in
+                    Button {
+                        RemoteControllerClient.shared.connectToLocalNetworkPeer(peer)
+                    } label: {
+                        Label(peer.name, systemImage: "ipad")
+                    }
+                }
+            }
+
+            Button {
+                isManualConnectPresented = true
+            } label: {
+                Label("Manual Host", systemImage: "number")
+            }
+        } label: {
+            Label("LAN", systemImage: "network")
                 .font(.footnote)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(.ultraThinMaterial)
                 .clipShape(Capsule())
         }
+        .onAppear {
+            browser.start()
+        }
+        .sheet(isPresented: $isManualConnectPresented) {
+            LocalNetworkManualConnectSheet()
+        }
+    }
+}
+
+private struct LocalNetworkManualConnectSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var host = ""
+    @State private var port = String(RemoteControllerLocalNetwork.defaultPort)
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                TextField("Host or IP", text: $host)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.numbersAndPunctuation)
+
+                TextField("Port", text: $port)
+                    .keyboardType(.numberPad)
+            }
+            .navigationTitle("LAN Host")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Connect") {
+                        connect()
+                    }
+                    .disabled(host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || UInt16(port) == nil)
+                }
+            }
+        }
+    }
+
+    private func connect() {
+        let trimmedHost = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let port = UInt16(port), !trimmedHost.isEmpty else { return }
+
+        RemoteControllerClient.shared.connectToLocalNetworkHost(trimmedHost, port: port)
+        dismiss()
     }
 }
 
@@ -198,7 +276,7 @@ private struct RemoteControllerPairingControl: View {
                 WiFiAwareRemoteControllerPairingControl()
             }
         } else {
-            Label("Wi-Fi Aware entitlement is not active for this signed app", systemImage: "exclamationmark.triangle")
+            Label("LAN fallback active: connect from iPhone with LAN or \(RemoteControllerLocalNetwork.endpointDescription)", systemImage: "network")
                 .foregroundStyle(.secondary)
         }
     }

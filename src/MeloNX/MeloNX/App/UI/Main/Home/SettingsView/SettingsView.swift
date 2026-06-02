@@ -21,6 +21,7 @@ struct SettingsViewNew: View {
     @AppStorage("OldView") var oldView = true
     @AppStorage("LDN_MITM") var ldn = printAllIPv4Addresses().first ?? "Unknown"
     @AppStorage("portal") var gamepo = false
+    @AppStorage("MeloNXAppMode") var appModeRaw: String = ""
     
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.verticalSizeClass) var verticalSizeClass: UserInterfaceSizeClass?
@@ -567,10 +568,26 @@ struct SettingsViewNew: View {
     
     private var inputSettings: some View {
         SettingsSection(title: "Input Configuration") {
+            if UIDevice.current.userInterfaceIdiom == .phone {
+                remoteControllerModeCard
+            }
             controllerSelectionCard
             RemoteControllerHostPanel()
             controllerTogglesCard
             onScreenControllerCard
+        }
+    }
+
+    private var remoteControllerModeCard: some View {
+        SettingsCard {
+            Button {
+                appModeRaw = MeloNXAppMode.controller.rawValue
+            } label: {
+                Label("Use this iPhone as Controller", systemImage: "iphone.radiowaves.left.and.right")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 8)
+            }
+            .foregroundColor(.blue)
         }
     }
     

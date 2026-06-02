@@ -45,6 +45,12 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_melonx-ctrl._tcp</string>
+	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>MeloNX uses the local network to connect an iPhone as a controller for a nearby iPad.</string>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>LaunchGameIntent</string>
